@@ -46,7 +46,7 @@ sharper than "running a few minutes behind."
 - **Ahead/behind schedule banner** — a plain-language line ("Running 3m behind schedule" /
   "Running 2m ahead of schedule" / on schedule), colored red when behind and green when ahead.
 - **First-run setup screen** — land on the page with no config and it asks for your Ontime
-  Cloud show code (e.g. `gzunpbjk`) or full share link. No hardcoded show baked into the file.
+  Cloud show code (e.g. `showcode`) or full share link. No hardcoded show baked into the file.
 - **Click-to-change link** — click the status pill any time to point the page at a different
   show; it's remembered in the browser for next time.
 - **Live updates over WebSocket**, with an HTTP fallback heartbeat and automatic reconnect if
@@ -74,7 +74,7 @@ their browser after the first visit.
 
 | Parameter | What it does | Default |
 | --- | --- | --- |
-| `?link=cloud.getontime.no/gzunpbjk` | Ontime Cloud show to connect to — accepts a bare code (`?link=gzunpbjk`) or the full link | — (asks on first load) |
+| `?link=cloud.getontime.no/showcode` | Ontime Cloud show to connect to — accepts a bare code (`?link=showcode`) or the full link | — (asks on first load) |
 | *(none — on-screen)* | Click the status pill to change the show without editing the URL; it's saved in the browser | — |
 | `?demo=1` | Demo mode with fake show data (for testing looks) | off |
 
