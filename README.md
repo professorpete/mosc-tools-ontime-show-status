@@ -47,8 +47,9 @@ sharper than "running a few minutes behind."
   "Running 2m ahead of schedule" / on schedule), colored red when behind and green when ahead.
 - **First-run setup screen** — land on the page with no config and it asks for your Ontime
   Cloud show code (e.g. `showcode`) or full share link. No hardcoded show baked into the file.
-- **Click-to-change link** — click the status pill up top or the show link in the footer any
-  time to point the page at a different show; it's remembered in the browser for next time.
+- **Click-to-change link** — click either pill under the title any time to point the page at
+  a different show; it's remembered in the browser for next time. Both live up top, above
+  where a phone's on-screen keyboard would otherwise cover them.
 - **Live updates over WebSocket**, with an HTTP fallback heartbeat and automatic reconnect if
   the connection drops (including a timeout guard for networks that silently swallow the
   WebSocket upgrade instead of erroring).
@@ -69,6 +70,10 @@ runs the exact same file with fake show data.
 **Option 2 — host it anywhere.** It's a static file — any web server, S3 bucket, or GitHub
 Pages works. Send clients the URL once and they can bookmark it; the show link is saved in
 their browser after the first visit.
+
+**Skip the setup screen entirely.** If you're hosting it yourself, put the show code right in
+the URL you send the client — `https://your-host.com/index.html?link=showcode` — and they
+land straight on the live status page, never seeing the "Connect to a show" screen at all.
 
 ### URL parameters
 
