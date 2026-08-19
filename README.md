@@ -47,8 +47,8 @@ sharper than "running a few minutes behind."
   "Running 2m ahead of schedule" / on schedule), colored red when behind and green when ahead.
 - **First-run setup screen** — land on the page with no config and it asks for your Ontime
   Cloud show code (e.g. `showcode`) or full share link. No hardcoded show baked into the file.
-- **Click-to-change link** — click the status pill any time to point the page at a different
-  show; it's remembered in the browser for next time.
+- **Click-to-change link** — click the status pill up top or the show link in the footer any
+  time to point the page at a different show; it's remembered in the browser for next time.
 - **Live updates over WebSocket**, with an HTTP fallback heartbeat and automatic reconnect if
   the connection drops (including a timeout guard for networks that silently swallow the
   WebSocket upgrade instead of erroring).
