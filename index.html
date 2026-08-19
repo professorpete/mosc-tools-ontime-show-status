@@ -352,6 +352,46 @@
   }
   #lastUpdated b { color: var(--dim-strong); font-weight: 600; }
 
+  #footerLink {
+    flex: 1 0 100%;
+    order: 3;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 1vh;
+  }
+  #footerLink #footerLinkText {
+    font-size: clamp(10px, 1.2vh, 12px);
+    letter-spacing: 0.05em;
+    color: var(--dim);
+    cursor: pointer;
+    padding: 0.35em 0.9em;
+    border-radius: 999px;
+    background: var(--panel-solid);
+    border: 1px solid var(--border);
+    max-width: 90vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  #footerLink #footerLinkText:hover { color: var(--fg); }
+  #footerLinkInput {
+    display: none;
+    background: #1c1c1c;
+    border: 1px solid #3a3a38;
+    border-radius: 6px;
+    color: var(--fg);
+    font: inherit;
+    font-size: clamp(10px, 1.2vh, 12px);
+    letter-spacing: 0.05em;
+    text-align: center;
+    padding: 0.3em 0.7em;
+    width: min(30ch, 80vw);
+    outline: none;
+  }
+  #footerLink.editing #footerLinkText { display: none; }
+  #footerLink.editing #footerLinkInput { display: inline-block; }
+
   #hint {
     max-width: 1100px;
     width: 100%;
@@ -517,6 +557,10 @@
       <span>mosc-tools · show status</span>
     </div>
     <div id="lastUpdated">Last updated: <b id="lastUpdatedTime">—</b></div>
+    <div id="footerLink" title="Click to change the Ontime link">
+      <span id="footerLinkText">—</span>
+      <input id="footerLinkInput" spellcheck="false" autocomplete="off" autocapitalize="none" autocorrect="off" placeholder="cloud.getontime.no/xxxxxxxx" />
+    </div>
   </footer>
   </div>
 
@@ -908,10 +952,10 @@
     submitSetup($setupInput.value);
   });
 
-  /* ---------- Editable link (click the status pill) ---------- */
-  function applyLink(value) {
+  /* ---------- Editable link (click the status pill, or the footer) ---------- */
+  function applyLink(value, onNoop) {
     const v = normalizeLink(value);
-    if (!v || v === LINK) { closeEditor(); return; }
+    if (!v || v === LINK) { (onNoop || closeEditor)(); return; }
     try { localStorage.setItem('showStatusLink', v); } catch { /* private mode */ }
     const p = new URLSearchParams(window.location.search);
     p.set('link', v);
@@ -940,6 +984,37 @@
     e.stopPropagation();
   });
   $serverInput.addEventListener('blur', () => closeEditor());
+
+  /* ---------- Footer link control (same idea, always visible at the bottom) ---------- */
+  const $footerLink = document.getElementById('footerLink');
+  const $footerLinkText = document.getElementById('footerLinkText');
+  const $footerLinkInput = document.getElementById('footerLinkInput');
+
+  $footerLinkText.textContent = LINK
+    ? ('Show: ' + LINK)
+    : 'Demo mode — click to connect a real show';
+
+  function openFooterEditor() {
+    $footerLinkInput.value = LINK || '';
+    $footerLink.classList.add('editing');
+    $footerLinkInput.focus();
+    $footerLinkInput.select();
+  }
+
+  function closeFooterEditor() {
+    $footerLink.classList.remove('editing');
+  }
+
+  $footerLink.addEventListener('click', (e) => {
+    if (!$footerLink.classList.contains('editing')) { e.stopPropagation(); openFooterEditor(); }
+  });
+  $footerLinkInput.addEventListener('click', (e) => e.stopPropagation());
+  $footerLinkInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') applyLink($footerLinkInput.value, closeFooterEditor);
+    else if (e.key === 'Escape') closeFooterEditor();
+    e.stopPropagation();
+  });
+  $footerLinkInput.addEventListener('blur', () => closeFooterEditor());
 
   /* ---------- Go ---------- */
   window.__showStatus = state; // debugging hook: inspect live state in the console
