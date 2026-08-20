@@ -115,13 +115,13 @@
     flex-wrap: wrap;
     justify-content: center;
     gap: 1.4vw;
-    max-width: 780px;
+    max-width: 1000px;
     width: 100%;
     margin: 0 auto;
   }
   #cards .card {
-    flex: 1 1 180px;
-    max-width: 240px;
+    flex: 1 1 160px;
+    max-width: 220px;
   }
   @media (max-width: 560px) {
     #cards .card { flex: 1 1 45%; max-width: none; }
@@ -514,6 +514,11 @@
       <div class="card-sub" id="actualStartSub"></div>
     </div>
     <div class="card">
+      <div class="card-label">Next Break</div>
+      <div class="card-value" id="nextBreak">—</div>
+      <div class="card-sub" id="nextBreakSub"></div>
+    </div>
+    <div class="card">
       <div class="card-label">Expected End</div>
       <div class="card-value" id="expectedEnd">—</div>
       <div class="card-sub" id="expectedEndSub"></div>
@@ -611,6 +616,8 @@
   const $actualStartSub = document.getElementById('actualStartSub');
   const $expectedEnd = document.getElementById('expectedEnd');
   const $expectedEndSub = document.getElementById('expectedEndSub');
+  const $nextBreak = document.getElementById('nextBreak');
+  const $nextBreakSub = document.getElementById('nextBreakSub');
   const $timelineFill = document.getElementById('timelineFill');
   const $timelineMarker = document.getElementById('timelineMarker');
   const $markerTime = document.getElementById('markerTime');
@@ -630,7 +637,17 @@
     eventNow: null,
     eventNext: null,
     timer: null,
+    entries: null,               // flattened rundown [{ id, title, colour, timeStart, timeEnd, skip }]
   };
+
+  /* A "green line" is this pipeline's break/walk-in/walk-out colour convention
+   * (#77C785). Also matches any named/hex colour containing "green" in case a
+   * show was colour-coded by hand directly in Ontime. */
+  function isGreenColour(colour) {
+    if (!colour || typeof colour !== 'string') return false;
+    const c = colour.trim().toLowerCase();
+    return c === '#77c785' || c.includes('green');
+  }
 
   /* ---------- Formatting helpers ---------- */
   function formatClock(msOfDay) {
@@ -718,6 +735,62 @@
       $expectedEndSub.className = 'card-sub';
     }
 
+    /* Time to next break: scan the fetched rundown, starting just after the
+     * currently playing cue, for the next green-coloured line. Projects its
+     * arrival using the live offset, the same pacing signal used elsewhere. */
+    $nextBreak.classList.remove('muted', 'late', 'early');
+    if (state.entries && state.entries.length) {
+      const anchorIdx = (state.eventNow && state.eventNow.id)
+        ? state.entries.findIndex((e) => e.id === state.eventNow.id)
+        : -1;
+      const onBreakNow = anchorIdx !== -1 && isGreenColour(state.entries[anchorIdx].colour);
+      if (onBreakNow) {
+        $nextBreak.textContent = 'Now';
+        $nextBreakSub.textContent = state.entries[anchorIdx].title
+          ? ('On break · ' + state.entries[anchorIdx].title)
+          : 'On break';
+        $nextBreakSub.className = 'card-sub good';
+      } else {
+        const searchFrom = anchorIdx === -1 ? 0 : anchorIdx + 1;
+        let found = null;
+        for (let i = searchFrom; i < state.entries.length; i++) {
+          const e = state.entries[i];
+          if (e.skip) continue;
+          if (isGreenColour(e.colour)) { found = e; break; }
+        }
+        if (found && typeof found.timeStart === 'number') {
+          const offMs = (off && off.mode === 'relative' && typeof off.relative === 'number')
+            ? off.relative
+            : (off && typeof off.absolute === 'number' ? off.absolute : 0);
+          const projected = found.timeStart + offMs;
+          if (nowMs !== null) {
+            const remain = projected - nowMs;
+            if (remain <= 0) {
+              $nextBreak.textContent = 'Now';
+              $nextBreakSub.textContent = found.title || 'Break underway';
+            } else {
+              $nextBreak.textContent = formatDuration(remain);
+              $nextBreakSub.textContent = (found.title ? found.title + ' · ' : '') + 'Est. ' + formatClock(projected);
+            }
+          } else {
+            $nextBreak.textContent = formatClock(projected);
+            $nextBreakSub.textContent = found.title || '';
+          }
+          $nextBreakSub.className = 'card-sub';
+        } else {
+          $nextBreak.textContent = '—';
+          $nextBreak.classList.add('muted');
+          $nextBreakSub.textContent = 'No more breaks';
+          $nextBreakSub.className = 'card-sub';
+        }
+      }
+    } else {
+      $nextBreak.textContent = '—';
+      $nextBreak.classList.add('muted');
+      $nextBreakSub.textContent = '';
+      $nextBreakSub.className = 'card-sub';
+    }
+
     /* Timeline */
     if (rd && nowMs !== null) {
       const visualEnd = Math.max(rd.plannedEnd, (off && off.expectedRundownEnd) || rd.plannedEnd, nowMs);
@@ -794,8 +867,37 @@
     }
     if (msg.tag === 'refetch') {
       fetchRundownTitle();
+      fetchRundownEntries();
       return;
     }
+  }
+
+  /* ---------- Full rundown (fetched over HTTP; used to find the next green
+   * "break" line — this is persisted project data, not part of the lightweight
+   * runtime state pushed over the WebSocket) ---------- */
+  async function fetchRundownEntries() {
+    try {
+      const res = await fetch(HTTP_BASE + '/data/rundowns/current', { cache: 'no-store' });
+      if (!res.ok) return;
+      const data = await res.json();
+      const order = (Array.isArray(data?.flatOrder) && data.flatOrder.length) ? data.flatOrder : data?.order;
+      const dict = data?.entries;
+      if (!Array.isArray(order) || !dict || typeof dict !== 'object') return;
+      const list = [];
+      for (const id of order) {
+        const entry = dict[id];
+        if (!entry) continue;
+        list.push({
+          id: entry.id ?? id,
+          title: entry.title || '',
+          colour: entry.colour || '',
+          timeStart: typeof entry.timeStart === 'number' ? entry.timeStart : null,
+          timeEnd: typeof entry.timeEnd === 'number' ? entry.timeEnd : null,
+          skip: !!entry.skip,
+        });
+      }
+      state.entries = list;
+    } catch { /* keep the previously fetched list rather than clearing it */ }
   }
 
   /* ---------- Rundown / session name (fetched over HTTP) ---------- */
@@ -870,6 +972,7 @@
       $hint.style.display = 'none';
       ws.send(JSON.stringify({ tag: 'poll' }));
       fetchRundownTitle();
+      fetchRundownEntries();
     };
 
     ws.onmessage = (e) => handleMessage(e.data);
@@ -902,8 +1005,15 @@
     const base = 17 * 3600_000 + 30 * 60_000; // 5:30 PM in ms-of-day
     state.rundown = { plannedStart: base, plannedEnd: base + 3 * 3600_000, actualStart: base + 20 * 60_000, numEvents: 47, selectedEventIndex: 23 };
     state.offset = { absolute: 182_000, relative: 182_000, mode: 'absolute', expectedRundownEnd: base + 3 * 3600_000 + 5 * 60_000 };
-    state.eventNow = { title: 'Keynote — President\u2019s Club' };
-    state.eventNext = { title: 'Awards Reel' };
+    state.eventNow = { id: 'e2', title: 'Keynote — President\u2019s Club' };
+    state.eventNext = { id: 'e3', title: 'Coffee Break' };
+    state.entries = [
+      { id: 'e1', title: 'Doors / Walk In', colour: '#77C785', timeStart: base - 20 * 60_000, timeEnd: base, skip: false },
+      { id: 'e2', title: 'Keynote — President\u2019s Club', colour: '#779BE7', timeStart: base + 20 * 60_000, timeEnd: base + 80 * 60_000, skip: false },
+      { id: 'e3', title: 'Coffee Break', colour: '#77C785', timeStart: base + 95 * 60_000, timeEnd: base + 110 * 60_000, skip: false },
+      { id: 'e4', title: 'Awards Reel', colour: '#779BE7', timeStart: base + 115 * 60_000, timeEnd: base + 170 * 60_000, skip: false },
+      { id: 'e5', title: 'Walk Out', colour: '#77C785', timeStart: base + 170 * 60_000, timeEnd: base + 175 * 60_000, skip: false },
+    ];
     state.clock = base + 65 * 60_000;
     state.clockReceivedAt = performance.now();
     $lastUpdatedTime.textContent = new Date().toLocaleTimeString();

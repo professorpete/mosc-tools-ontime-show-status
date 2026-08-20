@@ -37,9 +37,11 @@ sharper than "running a few minutes behind."
 
 ## What you get
 
-- **Expected / Actual Start, Expected End** — three clean cards. Expected End shows the live
-  projected finish time, colored amber when it's trending late and green when it's trending
-  early; a small "Planned" line underneath keeps the original schedule in view.
+- **Expected / Actual Start, Next Break, Expected End** — four clean cards. Next Break finds
+  the next green-coloured line in your rundown and counts down to it, adjusted for how the
+  show is actually running — not just the planned time. Expected End shows the live projected
+  finish time, colored amber when it's trending late and green when it's trending early; a
+  small "Planned" line underneath keeps the original schedule in view.
 - **Show timeline** — a progress bar from the event's planned start to end, with a live
   "now" marker, so anyone can see where the show actually is at a glance.
 - **Now / Next** — the currently running cue and what's coming up next.
