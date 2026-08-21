@@ -2,7 +2,7 @@
   <img src="docs/mosc-tools-logo.png" alt="Mosc-tools" width="130">
 </p>
 
-<h1 align="center">Mosc-tools — Ontime Live Show Status</h1>
+<h1 align="center">Mosc-tools — Ontime Live Client View</h1>
 
 <p align="center">
   A mobile-friendly, client-facing status page for <a href="https://www.getontime.no/">Ontime</a>.<br>
@@ -10,11 +10,11 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/professorpete/mosc-tools-ontime-show-status/archive/refs/heads/main.zip">
+  <a href="https://github.com/professorpete/mosc-tools-ontime-client-view/archive/refs/heads/main.zip">
     <img src="https://img.shields.io/badge/⬇%20Download-zip-2ea44f?style=for-the-badge&labelColor=1a1a1a" alt="Download zip">
   </a>
   &nbsp;
-  <a href="https://professorpete.github.io/mosc-tools-ontime-show-status/?demo=1">
+  <a href="https://professorpete.github.io/mosc-tools-ontime-client-view/?demo=1">
     <img src="https://img.shields.io/badge/▶%20Live%20demo-try%20it-3b82f6?style=for-the-badge&labelColor=1a1a1a" alt="Live demo">
   </a>
   &nbsp;
@@ -62,11 +62,11 @@ sharper than "running a few minutes behind."
 
 ## Quick start
 
-**Option 1 — just open it.** [Download the zip](https://github.com/professorpete/mosc-tools-ontime-show-status/archive/refs/heads/main.zip),
+**Option 1 — just open it.** [Download the zip](https://github.com/professorpete/mosc-tools-ontime-client-view/archive/refs/heads/main.zip),
 unzip, and open `index.html` in any browser. On first load it'll ask for your Ontime Cloud
 show code or link — paste it in and you're live.
 
-Want to see it before you download? The [live demo](https://professorpete.github.io/mosc-tools-ontime-show-status/?demo=1)
+Want to see it before you download? The [live demo](https://professorpete.github.io/mosc-tools-ontime-client-view/?demo=1)
 runs the exact same file with fake show data.
 
 **Option 2 — host it anywhere.** It's a static file — any web server, S3 bucket, or GitHub
